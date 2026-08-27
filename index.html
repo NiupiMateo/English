@@ -163,6 +163,35 @@ input[type=range]{ width:100%; accent-color:var(--magenta); height:24px; }
   color:var(--paper); padding:.5rem .8rem; width:min(260px,100%);
 }
 .waiting{ color:var(--muted); font-size:.9rem; margin-top:1rem; }
+#lobbyWaiting{ font-weight:800; color:var(--paper); animation:breathe 1.6s ease-in-out infinite; }
+@keyframes breathe{ 50%{ opacity:.4; } }
+
+/* --- avatar picker (lobby) --- */
+.avatarpicker{ margin-top:1.2rem; padding-top:1rem; border-top:1px dashed rgba(255,243,222,.16); }
+.avatar-row{ display:flex; align-items:center; justify-content:center; gap:.9rem; margin-bottom:.5rem; text-align:left; }
+.avatar-preview{ flex:0 0 auto; filter:drop-shadow(0 5px 0 rgba(0,0,0,.35)); }
+.avatar-row p{ margin:0; }
+.avatar-label{ font-size:.64rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:.55rem 0 .3rem; }
+.swatchrow{ display:flex; gap:.4rem; flex-wrap:wrap; justify-content:center; }
+.swatch{
+  width:28px; height:28px; border-radius:50%; border:2px solid rgba(255,243,222,.25);
+  cursor:pointer; padding:0; transition:.15s;
+}
+.swatch[aria-pressed="true"]{ border-color:var(--paper); box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--yellow); }
+.roster-avatar{ display:inline-flex; line-height:0; }
+
+/* --- host log (per-player word registry) --- */
+.hostlog{ list-style:none; margin:0; padding:0; display:grid; gap:.55rem; max-height:380px; overflow-y:auto; }
+.hostlog li{ background:rgba(0,0,0,.28); border-radius:10px; padding:.5rem .65rem; }
+.hostlog .row{ display:flex; align-items:center; gap:.5rem; }
+.hostlog .row .nm{ font-weight:800; font-size:.84rem; flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hostlog .row .ct{ font-size:.72rem; color:var(--yellow); font-weight:900; white-space:nowrap; }
+.hostlog .foundwords{ display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.4rem; padding-left:calc(30px + .5rem); }
+.hostlog .foundwords span{
+  font-size:.6rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase;
+  background:rgba(255,243,222,.12); padding:.15rem .5rem; border-radius:99px; color:var(--paper);
+}
+.hostlog .foundwords span.empty{ background:none; opacity:.45; text-transform:none; letter-spacing:normal; padding:0; }
 
 /* --- game bar --- */
 .gamebar{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-bottom:1rem; }
@@ -394,12 +423,31 @@ footer b{ color:var(--paper); }
         <input class="nameinput" id="myName" maxlength="14" autocomplete="off" style="margin-top:.4rem">
       </div>
 
+      <div class="avatarpicker" id="avatarPicker">
+        <div class="avatar-row">
+          <div class="avatar-preview" id="avatarPreview"></div>
+          <div>
+            <p style="font-weight:900;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Your character</p>
+            <p style="margin-top:.2rem;font-size:.8rem;color:var(--paper);max-width:24ch">Build a little Andean look for the game.</p>
+          </div>
+        </div>
+        <p class="avatar-label">Skin tone</p>
+        <div class="swatchrow" id="skinSeg"></div>
+        <p class="avatar-label">Hat</p>
+        <div class="seg" id="hatSeg" role="group" aria-label="Hat"></div>
+        <p class="avatar-label">Poncho colour</p>
+        <div class="swatchrow" id="ponchoSeg"></div>
+        <p class="avatar-label">Accessory</p>
+        <div class="seg" id="accSeg" role="group" aria-label="Accessory"></div>
+      </div>
+
       <ul class="roster" id="roster"></ul>
 
       <div class="setup-actions">
         <button type="button" class="btn" id="lobbyBack">Leave</button>
         <button type="button" class="btn primary" id="lobbyStart">Start the game</button>
       </div>
+      <p class="waiting" id="lobbyWaiting" hidden></p>
       <p class="waiting" id="lobbyNote"></p>
     </div>
   </section>
@@ -437,6 +485,11 @@ footer b{ color:var(--paper); }
         <div class="board-live" id="raceBox" hidden>
           <div class="panel-head"><h2>The race</h2><span class="chip" id="raceCount"></span></div>
           <ul class="race" id="race"></ul>
+        </div>
+
+        <div class="board-live" id="hostLogBox" hidden>
+          <div class="panel-head"><h2>Player log</h2><span class="chip" id="hostLogCount"></span></div>
+          <ul class="hostlog" id="hostLog"></ul>
         </div>
 
         <div class="panel-head">
@@ -529,6 +582,60 @@ const BANK = [
   {w:'HIKING',      cat:'trip',    clue:'Walking up the Andes to reach the Rainbow Mountain.'},
   {w:'MARKET',      cat:'trip',    clue:'Where people sell food, crafts and fresh fruit.'}
 ];
+
+/* =========================================================
+   1b. AVATARS — a little Andean character each player can build
+   ========================================================= */
+const SKINS = ['#F4C89B','#D9A066','#B97A45','#8A5A32','#5A3A20'];
+const HATS = ['none','chullo','sombrero','flower'];
+const HAT_LABELS = {none:'No hat', chullo:'Chullo', sombrero:'Sombrero', flower:'Flower'};
+const ACCESSORIES = ['none','llama','panflute','inti','chakana'];
+const ACC_LABELS = {none:'None', llama:'Llama', panflute:'Panflute', inti:'Inti sun', chakana:'Chakana'};
+// poncho colours reuse the COLORS palette defined below, once it exists
+
+function randomAvatar(){
+  const pick = a => a[Math.floor(Math.random()*a.length)];
+  return { skin:pick(SKINS), hat:pick(HATS), poncho:pick(COLORS), accessory:pick(ACCESSORIES) };
+}
+function loadSavedAvatar(){
+  try{ const raw = localStorage.getItem('pwh_avatar'); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveAvatar(av){ try{ localStorage.setItem('pwh_avatar', JSON.stringify(av)); }catch(e){} }
+function loadSavedName(){ try{ return localStorage.getItem('pwh_name') || ''; }catch(e){ return ''; } }
+function saveName(n){ try{ localStorage.setItem('pwh_name', n); }catch(e){} }
+
+function avatarSVG(av, px){
+  av = av || randomAvatar(); px = px || 40;
+  const skin = av.skin || SKINS[0], poncho = av.poncho || COLORS[0];
+  const hat = av.hat || 'none', acc = av.accessory || 'none';
+  let s = '';
+  s += '<path d="M6 54 Q32 40 58 54 L58 64 L6 64 Z" fill="'+poncho+'"/>';
+  s += '<path d="M6 54 Q32 40 58 54" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2"/>';
+  s += '<rect x="26" y="40" width="12" height="10" fill="'+skin+'"/>';
+  s += '<circle cx="14" cy="27" r="3.4" fill="'+skin+'"/><circle cx="50" cy="27" r="3.4" fill="'+skin+'"/>';
+  s += '<circle cx="32" cy="26" r="18" fill="'+skin+'"/>';
+  s += '<circle cx="25" cy="25" r="2.3" fill="#150A1E"/><circle cx="39" cy="25" r="2.3" fill="#150A1E"/>';
+  s += '<path d="M24 33 Q32 39 40 33" stroke="#150A1E" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+  if(hat === 'chullo'){
+    s += '<path d="M11 23 Q11 1 32 1 Q53 1 53 23 L53 29 Q42 20 32 27 Q22 20 11 29 Z" fill="'+COLORS[1]+'"/>';
+    s += '<path d="M11 13.5 L53 13.5" stroke="'+COLORS[3]+'" stroke-width="3"/>';
+    s += '<path d="M11 19 L53 19" stroke="'+COLORS[0]+'" stroke-width="3"/>';
+    s += '<rect x="6" y="21" width="8" height="16" rx="4" fill="'+COLORS[1]+'"/><rect x="50" y="21" width="8" height="16" rx="4" fill="'+COLORS[1]+'"/>';
+    s += '<circle cx="10" cy="38" r="4" fill="'+COLORS[2]+'"/><circle cx="54" cy="38" r="4" fill="'+COLORS[2]+'"/>';
+  } else if(hat === 'sombrero'){
+    s += '<path d="M16 15 Q32 -6 48 15 Z" fill="'+COLORS[4]+'"/>';
+    s += '<ellipse cx="32" cy="15" rx="27" ry="5.5" fill="'+COLORS[4]+'"/>';
+    s += '<ellipse cx="32" cy="15" rx="9" ry="2.4" fill="'+COLORS[2]+'"/>';
+  } else if(hat === 'flower'){
+    s += '<g transform="translate(45,13)"><circle r="3" fill="'+COLORS[0]+'"/><circle cx="4.2" r="3" fill="'+COLORS[0]+'"/><circle cx="-4.2" r="3" fill="'+COLORS[0]+'"/><circle cy="4.2" r="3" fill="'+COLORS[0]+'"/><circle cy="-4.2" r="3" fill="'+COLORS[0]+'"/><circle r="2.1" fill="'+COLORS[2]+'"/></g>';
+  }
+  if(acc !== 'none'){
+    const badge = {llama:'\uD83E\uDD99', panflute:'\uD83C\uDFBC', inti:'\u2600\uFE0F', chakana:'\u271A'}[acc] || '';
+    s += '<circle cx="51" cy="51" r="9.5" fill="var(--ink)" stroke="var(--paper)" stroke-width="2"/>';
+    s += '<text x="51" y="55" font-size="10" text-anchor="middle">'+badge+'</text>';
+  }
+  return '<svg width="'+px+'" height="'+px+'" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+s+'</svg>';
+}
 
 const SIZES = [12,14,16,18];
 const HINT_STEPS = [0,1,2,3,5,99];
@@ -724,8 +831,8 @@ let roomCode = '';                // the code people type
 let P = null;                     // the puzzle
 let found = [], hintsUsed = 0, clueMode = false;
 let t0 = null, timerId = null, finished = false;
-let players = new Map();          // id -> {name, found, total, time, done}
-let myId = 'me', myName = '';
+let players = new Map();          // id -> {name, avatar, found, foundWords, total, time, done}
+let myId = 'me', myName = '', myAvatar = null;
 let anchor = null, press = null, dragging = false, selCells = [];
 
 function show(name){
@@ -817,15 +924,60 @@ function setNet(state, text){
 function defaultName(){
   return mode === 'host' ? 'Host' : 'Player ' + (Math.floor(Math.random()*89) + 10);
 }
+function buildAvatarPicker(){
+  const swatchGroup = (containerId, list, key) => {
+    const el = $(containerId); el.innerHTML = '';
+    list.forEach(val => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'swatch'; b.style.background = val;
+      b.setAttribute('aria-pressed', String(myAvatar[key] === val));
+      b.setAttribute('aria-label', key + ' option');
+      b.addEventListener('click', () => { myAvatar[key] = val; saveAvatar(myAvatar); refreshAvatarUI(); applyAvatarChange(); });
+      el.appendChild(b);
+    });
+  };
+  const segGroup = (containerId, list, key, labels) => {
+    const el = $(containerId); el.innerHTML = '';
+    list.forEach(val => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = labels[val] || val;
+      b.setAttribute('aria-pressed', String(myAvatar[key] === val));
+      b.addEventListener('click', () => { myAvatar[key] = val; saveAvatar(myAvatar); refreshAvatarUI(); applyAvatarChange(); });
+      el.appendChild(b);
+    });
+  };
+  swatchGroup('skinSeg', SKINS, 'skin');
+  segGroup('hatSeg', HATS, 'hat', HAT_LABELS);
+  swatchGroup('ponchoSeg', COLORS, 'poncho');
+  segGroup('accSeg', ACCESSORIES, 'accessory', ACC_LABELS);
+}
+function refreshAvatarUI(){
+  buildAvatarPicker();
+  $('avatarPreview').innerHTML = avatarSVG(myAvatar, 64);
+}
+function applyAvatarChange(){
+  if(players.has(myId)) players.get(myId).avatar = myAvatar;
+  drawRoster();
+  if(mode === 'guest') Net.send({t:'hello', name:myName, avatar:myAvatar});
+  else pushScores();
+}
 function drawRoster(){
   const ul = $('roster');
   ul.innerHTML = '';
   [...players.entries()].forEach(([id, p]) => {
     const li = document.createElement('li');
     if(id === myId) li.className = 'me';
-    li.innerHTML = (p.host ? '<span class="crown" aria-hidden="true">★</span>' : '') +
-                   '<span></span>';
-    li.lastChild.textContent = p.name;
+    const av = document.createElement('span');
+    av.className = 'roster-avatar';
+    av.innerHTML = avatarSVG(p.avatar, 22);
+    li.appendChild(av);
+    if(p.host){
+      const crown = document.createElement('span');
+      crown.className = 'crown'; crown.setAttribute('aria-hidden','true'); crown.textContent = '★';
+      li.appendChild(crown);
+    }
+    const nm = document.createElement('span'); nm.textContent = p.name;
+    li.appendChild(nm);
     ul.appendChild(li);
   });
   const n = players.size;
@@ -833,19 +985,31 @@ function drawRoster(){
     ? (n === 1 ? 'Nobody else has joined yet.' : n + ' players in the room.')
     : '';
 }
+function updateLobbyStartUI(){
+  const isHost = mode === 'host';
+  const showBtn = isHost || !Net.ready;   // a guest only self-starts when there's no live host connection
+  $('lobbyStart').hidden = !showBtn;
+  $('lobbyWaiting').hidden = showBtn;
+  $('lobbyStart').textContent = isHost ? 'Start the game' : 'Start playing';
+  if(!isHost) $('lobbyWaiting').textContent = 'Waiting for the host to start the game…';
+}
 function openLobby(isHost){
   players.clear();
-  myId = 'me'; myName = defaultName();
-  players.set(myId, {name:myName, host:isHost, found:0, done:false, time:null});
+  myId = 'me';
+  myName = loadSavedName() || defaultName();
+  myAvatar = loadSavedAvatar() || randomAvatar();
+  players.set(myId, {name:myName, host:isHost, avatar:myAvatar, found:0, foundWords:[], done:false, time:null});
   $('myName').value = myName;
+  buildAvatarPicker();
+  $('avatarPreview').innerHTML = avatarSVG(myAvatar, 64);
   $('lobbyCode').textContent = roomCode;
   $('lobbyEyebrow').textContent = isHost ? 'Room open' : 'You joined a room';
-  $('lobbyStart').textContent = isHost ? 'Start the game' : 'Start without waiting';
   const info = unpackCode(roomCode);
   S = info.S;
   $('lobbyRules').textContent = 'A ' + S.size + ' × ' + S.size + ' grid, ' + S.words + ' words, ' +
     (S.hints === 99 ? 'unlimited hints' : S.hints + (S.hints===1?' hint':' hints')) + '.';
   drawRoster();
+  updateLobbyStartUI();
   show('lobby');
   try{ history.replaceState(null, '', '?r=' + roomCode); }catch(e){}
   setNet('', 'Connecting…');
@@ -857,9 +1021,9 @@ async function connect(isHost){
     else       await Net.join(roomCode, onGuestMsg);
     setNet('on', 'Live');
     $('netHelp').textContent = isHost
-      ? 'Everybody who joins starts the moment you press the button.'
-      : 'You are connected. The host starts the round for everyone.';
-    if(!isHost) Net.send({t:'hello', name:myName});
+      ? 'Everybody who joins waits in the lobby until you press the button — then it starts for the whole room at once.'
+      : 'You are connected. Set up your name and character, then wait — the host starts the round for everyone.';
+    if(!isHost) Net.send({t:'hello', name:myName, avatar:myAvatar});
   }catch(err){
     setNet('off', 'Shared code');
     $('netHelp').textContent = 'No live connection here, but the code carries the whole puzzle: '
@@ -867,21 +1031,26 @@ async function connect(isHost){
     toast(isHost ? 'The live room could not open — the code still works for everyone.'
                  : 'No live connection, but the code has the whole puzzle.', 5000);
   }
+  updateLobbyStartUI();
 }
 
 /* --- host receives ------------------------------------------------ */
 function onHostMsg(msg, conn){
   if(msg.t === 'hello'){
     const name = (msg.name || 'Player').slice(0,14);
-    if(players.has(conn.peer)) players.get(conn.peer).name = name;   // a rename keeps the score
-    else players.set(conn.peer, {name, found:0, done:false, time:null});
+    const avatar = msg.avatar || randomAvatar();
+    if(players.has(conn.peer)){ const p = players.get(conn.peer); p.name = name; p.avatar = avatar; }   // a rename/re-style keeps the score
+    else players.set(conn.peer, {name, avatar, found:0, foundWords:[], done:false, time:null});
     conn.send({t:'welcome', id:conn.peer, started:!!t0, code:roomCode});
     if(t0) conn.send({t:'start', code:roomCode});
     drawRoster(); pushScores();
   }
-  if(msg.t === 'progress' && players.has(conn.peer)){ players.get(conn.peer).found = msg.found; pushScores(); }
+  if(msg.t === 'progress' && players.has(conn.peer)){
+    const p = players.get(conn.peer); p.found = msg.found; p.foundWords = msg.words || [];
+    pushScores();
+  }
   if(msg.t === 'done' && players.has(conn.peer)){
-    const p = players.get(conn.peer); p.found = msg.found; p.done = true; p.time = msg.time;
+    const p = players.get(conn.peer); p.found = msg.found; p.foundWords = msg.words || p.foundWords || []; p.done = true; p.time = msg.time;
     pushScores(); toast(p.name + ' finished!');
   }
   if(msg.t === 'bye'){ players.delete(conn.peer); drawRoster(); pushScores(); }
@@ -889,6 +1058,7 @@ function onHostMsg(msg, conn){
 let scoreTimer = null, scoreDue = false;
 function pushScores(){
   drawRace();
+  drawRegistry();
   if(scoreTimer){ scoreDue = true; return; }        // a big room stays calm: max ~3 updates a second
   Net.broadcast({t:'scores', list:[...players.entries()].map(([id,p]) => ({id, ...p}))});
   scoreTimer = setTimeout(() => {
@@ -915,15 +1085,21 @@ function onGuestMsg(msg){
 
 $('myName').addEventListener('input', e => {
   myName = e.target.value.slice(0,14) || 'Player';
+  saveName(myName);
   if(players.has(myId)) players.get(myId).name = myName;
   drawRoster();
-  if(mode === 'guest') Net.send({t:'hello', name:myName});
+  if(mode === 'guest') Net.send({t:'hello', name:myName, avatar:myAvatar});
   else pushScores();
 });
 $('lobbyBack').addEventListener('click', () => { Net.close(); mode = 'solo'; show('home'); });
 $('lobbyStart').addEventListener('click', () => {
-  if(mode === 'host' && Net.ready) Net.broadcast({t:'start', code:roomCode});
-  countdownThenStart();
+  if(mode === 'host'){
+    if(Net.ready) Net.broadcast({t:'start', code:roomCode});
+    countdownThenStart();
+  } else if(mode === 'guest' && !Net.ready){
+    // only reachable with no live connection: the shared-code fallback, started locally
+    countdownThenStart();
+  }
 });
 $('copyLink').addEventListener('click', async e => {
   const url = location.origin + location.pathname + '?r=' + roomCode;
@@ -963,7 +1139,7 @@ function startGame(fromRoom){
   S = info.S;
   P = buildPuzzle(S, info.seed);
   found = []; hintsUsed = 0; finished = false; anchor = null; press = null; selCells = [];
-  players.forEach(p => { p.found = 0; p.done = false; p.time = null; });
+  players.forEach(p => { p.found = 0; p.foundWords = []; p.done = false; p.time = null; });
   $('gameCode').textContent = roomCode;
   $('dirNote').textContent = S.diag && S.back ? 'Words run in all eight directions, and some of them run backwards.'
     : S.diag ? 'Words run across, down and diagonally.'
@@ -974,6 +1150,7 @@ function startGame(fromRoom){
   $('win').hidden = true;
   $('raceBox').hidden = (mode === 'solo' || !Net.ready);
   drawRace();
+  drawRegistry();
   t0 = Date.now();
   clearInterval(timerId);
   timerId = setInterval(() => { $('statTime').textContent = fmt(elapsed()); }, 250);
@@ -1022,13 +1199,23 @@ function raceRow(p, pos, total){
   const pct = Math.round((p.found / total) * 100);
   li.style.color = COLORS[(pos-1) % COLORS.length];
   if(p.id === myId) li.className = 'me';
-  li.innerHTML = '<div class="top"><span class="nm"></span><span class="time">' +
-    (p.done && p.time != null ? fmt(p.time) : p.found + '/' + total) + '</span></div>' +
-    '<div class="bar"><span style="width:' + pct + '%;background:currentColor"></span></div>';
+  const top = document.createElement('div'); top.className = 'top';
+  const nmWrap = document.createElement('span');
+  nmWrap.style.cssText = 'display:inline-flex;align-items:center;gap:.35rem';
+  const av = document.createElement('span'); av.className = 'roster-avatar'; av.innerHTML = avatarSVG(p.avatar, 18);
+  nmWrap.appendChild(av);
   const nm = document.createElement('span');
-  nm.className = 'nm';
   nm.textContent = pos + '. ' + (p.done ? '✔ ' : '') + p.name;   // textContent: a name can never inject markup
-  li.querySelector('.nm').replaceWith(nm);
+  nmWrap.appendChild(nm);
+  top.appendChild(nmWrap);
+  const time = document.createElement('span'); time.className = 'time';
+  time.textContent = (p.done && p.time != null ? fmt(p.time) : p.found + '/' + total);
+  top.appendChild(time);
+  li.appendChild(top);
+  const bar = document.createElement('div'); bar.className = 'bar';
+  const fill = document.createElement('span'); fill.style.cssText = 'width:' + pct + '%;background:currentColor';
+  bar.appendChild(fill);
+  li.appendChild(bar);
   return li;
 }
 function drawRace(){
@@ -1049,6 +1236,42 @@ function drawRace(){
     if(mine >= TOP) ul.appendChild(raceRow(list[mine], mine+1, total));
   }
   $('raceCount').textContent = players.size + (players.size === 1 ? ' player' : ' players');
+}
+
+/* --- host-only registry: every participant, their character, and the words they've found --- */
+function drawRegistry(){
+  const box = $('hostLogBox');
+  const visible = (mode === 'host');
+  box.hidden = !visible;
+  if(!visible) return;
+  const ul = $('hostLog'); ul.innerHTML = '';
+  const total = P ? P.words.length : S.words;
+  const list = [...players.entries()].map(([id,p]) => ({id, ...p}))
+    .sort((a,b) => (b.found - a.found) || ((a.time ?? 1e9) - (b.time ?? 1e9)));
+  list.forEach(p => {
+    const li = document.createElement('li');
+    const row = document.createElement('div'); row.className = 'row';
+    const av = document.createElement('span'); av.className = 'roster-avatar'; av.innerHTML = avatarSVG(p.avatar, 30);
+    row.appendChild(av);
+    const nm = document.createElement('span'); nm.className = 'nm';
+    nm.textContent = (p.host ? '★ ' : '') + p.name;
+    row.appendChild(nm);
+    const ct = document.createElement('span'); ct.className = 'ct';
+    ct.textContent = p.done ? ('✔ ' + fmt(p.time)) : (p.found + '/' + total);
+    row.appendChild(ct);
+    li.appendChild(row);
+    const fw = document.createElement('div'); fw.className = 'foundwords';
+    const words = p.foundWords || [];
+    if(words.length){
+      words.forEach(w => { const s = document.createElement('span'); s.textContent = w; fw.appendChild(s); });
+    } else {
+      const s = document.createElement('span'); s.className = 'empty'; s.textContent = 'No words yet';
+      fw.appendChild(s);
+    }
+    li.appendChild(fw);
+    ul.appendChild(li);
+  });
+  $('hostLogCount').textContent = players.size + (players.size === 1 ? ' player' : ' players');
 }
 
 function cellAt(r,c){ return gridEl.children[r*P.size + c]; }
@@ -1088,8 +1311,8 @@ function tryWord(cells){
   $('live').textContent = e.w + ' found. ' + (P.words.length - found.length) + ' to go.';
   drawList(); updateStats();
 
-  if(players.has(myId)) players.get(myId).found = found.length;
-  if(mode === 'guest') Net.send({t:'progress', found:found.length});
+  if(players.has(myId)){ const me = players.get(myId); me.found = found.length; me.foundWords = found.slice(); }
+  if(mode === 'guest') Net.send({t:'progress', found:found.length, words:found.slice()});
   else if(mode === 'host') pushScores();
   else drawRace();
 
@@ -1099,8 +1322,8 @@ function finish(){
   finished = true;
   clearInterval(timerId);
   const secs = elapsed();
-  if(players.has(myId)){ const me = players.get(myId); me.done = true; me.time = secs; me.found = found.length; }
-  if(mode === 'guest') Net.send({t:'done', found:found.length, time:secs});
+  if(players.has(myId)){ const me = players.get(myId); me.done = true; me.time = secs; me.found = found.length; me.foundWords = found.slice(); }
+  if(mode === 'guest') Net.send({t:'done', found:found.length, time:secs, words:found.slice()});
   else if(mode === 'host') pushScores();
 
   $('winTime').innerHTML = fmt(secs) + '<small>Time</small>';
@@ -1131,8 +1354,10 @@ function drawPodium(){
   const podiumRow = (p, pos) => {
     const li = document.createElement('li');
     if(p.id === myId) li.className = 'me';
-    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.name;
     li.innerHTML = '<span class="pos">' + pos + '</span>';
+    const av = document.createElement('span'); av.className = 'roster-avatar'; av.innerHTML = avatarSVG(p.avatar, 26);
+    li.appendChild(av);
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.name;
     li.appendChild(nm);
     const res = document.createElement('span'); res.className = 'res';
     res.textContent = p.done ? fmt(p.time) : p.found + '/' + total;
@@ -1259,7 +1484,7 @@ document.addEventListener('keydown', ev => { if(ev.key === 'Escape' && !$('win')
   const info = r ? unpackCode(r) : null;
   if(info){
     mode = 'guest'; roomCode = r.toUpperCase(); S = info.S;
-    $('heroText').textContent = 'You were invited to a room. Put in your name and wait for the host.';
+    $('heroText').textContent = 'You were invited to a room. Put in your name, build your character, and wait for the host to start.';
     openLobby(false);
   }else{
     show('home');
