@@ -174,12 +174,31 @@ input[type=range]{ width:100%; accent-color:var(--magenta); height:24px; }
 .builder-sub{ font-size:.8rem; color:var(--muted); margin:.2rem 0 .7rem; }
 .builder-actions{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
 .avatar-label{ font-size:.64rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:0; }
-.tabs{ display:flex; gap:.35rem; overflow-x:auto; padding:.9rem 0 .7rem; -webkit-overflow-scrolling:touch; }
-.tab{ flex:0 0 auto; font-family:var(--body); font-weight:800; font-size:.68rem; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--muted); background:rgba(0,0,0,.3); border:0; border-radius:99px;
-  padding:.45rem .85rem; cursor:pointer; transition:.15s; }
-.tab:hover{ color:var(--paper); }
-.tab[aria-pressed="true"]{ background:var(--yellow); color:var(--ink); }
+/* the character editor opens as its own panel — nothing scrolls sideways */
+.editor{ position:fixed; inset:0; z-index:85; background:rgba(10,4,16,.86); backdrop-filter:blur(6px);
+  display:flex; flex-direction:column; padding:clamp(.5rem,2vw,1.5rem); }
+.ed-card{ width:min(760px,100%); margin-block:auto; max-height:94dvh; overflow:auto;
+  background:linear-gradient(180deg,var(--panel),var(--ink-2));
+  border:2px solid rgba(255,243,222,.16); border-radius:16px;
+  box-shadow:0 0 0 5px var(--magenta), 0 30px 60px rgba(0,0,0,.6); }
+.ed-head{ position:sticky; top:0; z-index:2; padding:clamp(.9rem,2.4vw,1.3rem);
+  background:linear-gradient(180deg,var(--panel) 78%,rgba(42,21,57,0));
+  display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+.ed-preview{ line-height:0; flex:0 0 auto; filter:drop-shadow(0 7px 0 rgba(0,0,0,.4)); }
+.ed-head h2{ font-family:var(--display); font-size:1.4rem; margin:0 0 .2rem; color:var(--yellow); }
+.ed-head p{ margin:0 0 .7rem; font-size:.8rem; color:var(--muted); max-width:34ch; }
+.ed-actions{ display:flex; gap:.5rem; flex-wrap:wrap; }
+.ed-body{ padding:0 clamp(.9rem,2.4vw,1.3rem) clamp(1rem,2.4vw,1.4rem); }
+.ed-sec{ margin-bottom:1.1rem; }
+@media (max-width:540px){
+  .ed-head{ gap:.75rem; padding:.85rem .9rem; }
+  .ed-head h2{ font-size:1.1rem; }
+  .ed-head p{ display:none; }          /* the section titles already say it */
+  .ed-preview svg{ width:74px; height:74px; }
+  .ed-actions .btn{ padding:.45rem .8rem; font-size:.72rem; }
+}
+.ed-sec h3{ font-size:.66rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); margin:0 0 .5rem; padding-bottom:.35rem; border-bottom:1px dashed rgba(255,243,222,.16); }
 .options{ display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:.5rem; }
 .opt{ background:rgba(0,0,0,.28); border:2px solid transparent; border-radius:12px; padding:.4rem .2rem .35rem;
   cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:.3rem; color:var(--muted);
@@ -487,12 +506,10 @@ footer b{ color:var(--paper); }
             <p class="builder-sub">More than thirteen million looks. Woman or man, a hat, clothes, a pattern, an extra and an animal friend.</p>
             <div class="builder-actions">
               <input class="nameinput" id="myName" maxlength="14" autocomplete="off" placeholder="Your name" aria-label="Your name">
-              <button type="button" class="btn" id="avRandom">Surprise me</button>
+              <button type="button" class="btn" id="openEditor">Edit character</button>
             </div>
           </div>
         </div>
-        <div class="tabs" id="avTabs" role="group" aria-label="Character parts"></div>
-        <div class="options" id="avOptions"></div>
       </div>
 
       <ul class="roster" id="roster"></ul>
@@ -582,6 +599,23 @@ footer b{ color:var(--paper); }
       <button type="button" class="btn primary" id="againBtn">Play again</button>
       <button type="button" class="btn" id="closeBtn">Look at the grid</button>
     </div>
+  </div>
+</div>
+
+<div class="editor" id="editor" hidden role="dialog" aria-modal="true" aria-labelledby="edTitle">
+  <div class="ed-card">
+    <div class="ed-head">
+      <div class="ed-preview" id="edPreview"></div>
+      <div>
+        <h2 id="edTitle">Your character</h2>
+        <p>Pick a person, a hat, clothes, a pattern, a colour, an extra and an animal friend.</p>
+        <div class="ed-actions">
+          <button type="button" class="btn" id="edRandom">Surprise me</button>
+          <button type="button" class="btn primary" id="edDone">Done</button>
+        </div>
+      </div>
+    </div>
+    <div class="ed-body" id="edSections"></div>
   </div>
 </div>
 
@@ -1170,7 +1204,6 @@ function setNet(state, text){
 function defaultName(){
   return mode === 'host' ? 'Host' : 'Player ' + (Math.floor(Math.random()*89) + 10);
 }
-let avTab = 'body';
 const LONG_HAIR = [0,1,4,5];                       // braids, long, bun, ponytail
 function withBody(av, v){
   const out = {...av, body:v};
@@ -1179,37 +1212,55 @@ function withBody(av, v){
   if(!isMale && wasMale && !LONG_HAIR.includes(out.hair)) out.hair = 1;  // long
   return out;
 }
-function buildAvatarPicker(){
-  const tabs = $('avTabs'); tabs.innerHTML = '';
-  Object.keys(AV_LABELS).forEach(key => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'tab'; b.textContent = AV_LABELS[key];
-    b.setAttribute('aria-pressed', String(key === avTab));
-    b.addEventListener('click', () => { avTab = key; buildAvatarPicker(); });
-    tabs.appendChild(b);
+function optionButton(key, label, i){
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'opt';
+  b.setAttribute('aria-pressed', String((myAvatar[key]||0) === i));
+  b.setAttribute('aria-label', AV_LABELS[key] + ': ' + label);
+  const preview = key === 'body' ? withBody(myAvatar, i) : {...myAvatar, [key]:i};
+  b.innerHTML = avatarSVG(preview, 52);          // each option previews the exact result
+  const cap = document.createElement('span'); cap.textContent = label;
+  b.appendChild(cap);
+  b.addEventListener('click', () => {
+    myAvatar = key === 'body' ? withBody(myAvatar, i) : {...myAvatar, [key]:i};
+    saveAvatar(myAvatar);
+    refreshAvatarUI(); applyAvatarChange();
   });
-  const box = $('avOptions'); box.innerHTML = '';
-  AV_OPTIONS[avTab].forEach((label, i) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'opt';
-    b.setAttribute('aria-pressed', String(myAvatar[avTab] === i));
-    b.setAttribute('aria-label', AV_LABELS[avTab] + ': ' + label);
-    const preview = avTab === 'body' ? withBody(myAvatar, i) : {...myAvatar, [avTab]:i};
-    b.innerHTML = avatarSVG(preview, 54);   // every option previews the exact result
-    const cap = document.createElement('span'); cap.textContent = label;
-    b.appendChild(cap);
-    b.addEventListener('click', () => {
-      myAvatar = avTab === 'body' ? withBody(myAvatar, i) : {...myAvatar, [avTab]:i};
-      saveAvatar(myAvatar);
-      refreshAvatarUI(); applyAvatarChange();
-    });
-    box.appendChild(b);
+  return b;
+}
+function buildAvatarPicker(){
+  const box = $('edSections');
+  if(!box || $('editor').hidden) return;          // only build it while the panel is open
+  box.innerHTML = '';
+  Object.keys(AV_LABELS).forEach(key => {
+    const sec = document.createElement('section'); sec.className = 'ed-sec';
+    const h3 = document.createElement('h3'); h3.textContent = AV_LABELS[key];
+    const grid = document.createElement('div'); grid.className = 'options';
+    AV_OPTIONS[key].forEach((label, i) => grid.appendChild(optionButton(key, label, i)));
+    sec.append(h3, grid);
+    box.appendChild(sec);
   });
 }
 function refreshAvatarUI(){
+  const svg = avatarSVG(myAvatar, 116);
+  $('avatarPreview').innerHTML = svg;
+  $('edPreview').innerHTML = avatarSVG(myAvatar, 92);
   buildAvatarPicker();
-  $('avatarPreview').innerHTML = avatarSVG(myAvatar, 116);
 }
+function openEditor(){
+  $('editor').hidden = false;
+  refreshAvatarUI();
+  $('edDone').focus({preventScroll:true});
+}
+function closeEditor(){ $('editor').hidden = true; }
+$('openEditor').addEventListener('click', openEditor);
+$('edDone').addEventListener('click', closeEditor);
+$('editor').addEventListener('click', e => { if(e.target.id === 'editor') closeEditor(); });
+$('edRandom').addEventListener('click', () => {
+  myAvatar = randomAvatar(); saveAvatar(myAvatar);
+  refreshAvatarUI(); applyAvatarChange();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('editor').hidden) closeEditor(); });
 function applyAvatarChange(){
   if(players.has(myId)) players.get(myId).avatar = myAvatar;
   drawRoster();
@@ -1255,7 +1306,7 @@ function openLobby(isHost){
   myAvatar = loadSavedAvatar() || randomAvatar();
   players.set(myId, {name:myName, host:isHost, avatar:myAvatar, found:0, foundWords:[], done:false, time:null});
   $('myName').value = myName;
-  buildAvatarPicker();
+  $('editor').hidden = true;
   $('avatarPreview').innerHTML = avatarSVG(myAvatar, 116);
   $('lobbyCode').textContent = roomCode;
   $('lobbyEyebrow').textContent = isHost ? 'Room open' : 'You joined a room';
@@ -1367,10 +1418,6 @@ $('myName').addEventListener('input', e => {
   drawRoster();
   if(mode === 'guest') Net.send({t:'hello', name:myName, avatar:myAvatar});
   else pushScores();
-});
-$('avRandom').addEventListener('click', () => {
-  myAvatar = randomAvatar(); saveAvatar(myAvatar);
-  refreshAvatarUI(); applyAvatarChange();
 });
 $('lobbyBack').addEventListener('click', () => { Net.close(); mode = 'solo'; show('home'); });
 $('lobbyStart').addEventListener('click', () => {
