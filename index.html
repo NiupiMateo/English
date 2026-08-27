@@ -166,18 +166,78 @@ input[type=range]{ width:100%; accent-color:var(--magenta); height:24px; }
 #lobbyWaiting{ font-weight:800; color:var(--paper); animation:breathe 1.6s ease-in-out infinite; }
 @keyframes breathe{ 50%{ opacity:.4; } }
 
-/* --- avatar picker (lobby) --- */
-.avatarpicker{ margin-top:1.2rem; padding-top:1rem; border-top:1px dashed rgba(255,243,222,.16); }
-.avatar-row{ display:flex; align-items:center; justify-content:center; gap:.9rem; margin-bottom:.5rem; text-align:left; }
-.avatar-preview{ flex:0 0 auto; filter:drop-shadow(0 5px 0 rgba(0,0,0,.35)); }
-.avatar-row p{ margin:0; }
-.avatar-label{ font-size:.64rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:.55rem 0 .3rem; }
-.swatchrow{ display:flex; gap:.4rem; flex-wrap:wrap; justify-content:center; }
-.swatch{
-  width:28px; height:28px; border-radius:50%; border:2px solid rgba(255,243,222,.25);
-  cursor:pointer; padding:0; transition:.15s;
-}
-.swatch[aria-pressed="true"]{ border-color:var(--paper); box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--yellow); }
+/* --- character builder (lobby) --- */
+.builder{ margin-top:1.2rem; padding-top:1rem; border-top:1px dashed rgba(255,243,222,.16); text-align:left; }
+.builder-top{ display:flex; gap:1.1rem; align-items:center; flex-wrap:wrap; justify-content:center; }
+.avatar-preview{ flex:0 0 auto; line-height:0; filter:drop-shadow(0 7px 0 rgba(0,0,0,.4)); }
+.builder-intro{ max-width:32ch; }
+.builder-sub{ font-size:.8rem; color:var(--muted); margin:.2rem 0 .7rem; }
+.builder-actions{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+.avatar-label{ font-size:.64rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:0; }
+.tabs{ display:flex; gap:.35rem; overflow-x:auto; padding:.9rem 0 .7rem; -webkit-overflow-scrolling:touch; }
+.tab{ flex:0 0 auto; font-family:var(--body); font-weight:800; font-size:.68rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); background:rgba(0,0,0,.3); border:0; border-radius:99px;
+  padding:.45rem .85rem; cursor:pointer; transition:.15s; }
+.tab:hover{ color:var(--paper); }
+.tab[aria-pressed="true"]{ background:var(--yellow); color:var(--ink); }
+.options{ display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:.5rem; }
+.opt{ background:rgba(0,0,0,.28); border:2px solid transparent; border-radius:12px; padding:.4rem .2rem .35rem;
+  cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:.3rem; color:var(--muted);
+  font-family:var(--body); font-size:.58rem; font-weight:800; letter-spacing:.03em; transition:.15s; }
+.opt svg{ display:block; }
+.opt span{ line-height:1.15; text-align:center; }
+.opt:hover{ background:rgba(255,243,222,.1); color:var(--paper); }
+.opt[aria-pressed="true"]{ border-color:var(--yellow); background:rgba(255,224,27,.14); color:var(--paper); }
+
+/* --- results screen (host projects this) --- */
+.bigscreen, .results{ display:flex; flex-direction:column; position:fixed; inset:0; z-index:80; background:
+   radial-gradient(900px 500px at 15% -10%, rgba(255,45,120,.3), transparent 60%),
+   radial-gradient(800px 460px at 90% 0%, rgba(53,214,240,.2), transparent 55%), var(--ink);
+   overflow:auto; padding:clamp(1rem,3vw,2rem); }
+.bs-inner, .results .res-inner{ width:100%; margin-block:auto; }
+.bs-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+.bs-head h2{ font-family:var(--display); font-size:clamp(1.8rem,5vw,3.2rem); margin:.3rem 0 0; line-height:1;
+  text-shadow:.025em .025em 0 var(--yellow), .05em .05em 0 var(--magenta); }
+.bs-meta{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+.bs-meta code{ font-family:var(--body); font-weight:900; letter-spacing:.18em; font-size:1rem;
+  color:var(--ink); background:var(--yellow); padding:.15rem .5rem; border-radius:6px; }
+.bs-list{ list-style:none; margin:0; padding:0; display:grid; gap:.55rem; }
+@media (min-width:1050px){ .bs-list.two{ grid-template-columns:1fr 1fr; column-gap:1.2rem; } }
+.bs-list li{ display:flex; align-items:center; gap:clamp(.5rem,1.4vw,1rem);
+  background:rgba(0,0,0,.32); border-radius:16px; padding:.7rem 1.1rem .7rem .7rem; }
+.bs-list li.me{ background:rgba(255,224,27,.16); outline:2px solid var(--yellow); }
+.bs-list .rank{ font-family:var(--display); font-size:clamp(1.2rem,2.6vw,2rem); width:1.8em; text-align:center; color:var(--yellow); }
+.bs-list .av{ line-height:0; flex:0 0 auto; }
+.bs-list .who{ font-weight:900; font-size:clamp(.95rem,2vw,1.5rem); flex:1 1 8ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bs-list .track{ flex:2 1 120px; height:14px; border-radius:99px; background:rgba(0,0,0,.45); overflow:hidden; }
+.bs-list .track i{ display:block; height:100%; border-radius:99px; transition:width .4s; }
+.bs-list .num{ font-family:var(--display); font-size:clamp(1rem,2.2vw,1.7rem); min-width:3.2em; text-align:right; }
+.bs-list .num small{ display:block; font-family:var(--body); font-size:.55rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); font-weight:800; }
+.bs-actions{ display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap; margin-top:1.4rem; }
+.btn.danger{ border-color:var(--orange); color:var(--orange); }
+.btn.danger:hover{ background:var(--orange); color:var(--ink); }
+.bs-empty{ text-align:center; color:var(--muted); padding:2rem 0; }
+
+.results .res-inner{ max-width:900px; margin-inline:auto; text-align:center; }
+.results h2{ font-family:var(--display); font-size:clamp(2rem,6vw,3.6rem); margin:.4rem 0 1.4rem; line-height:1;
+  text-shadow:.025em .025em 0 var(--yellow), .05em .05em 0 var(--magenta); }
+.podium3{ display:flex; align-items:flex-end; justify-content:center; gap:clamp(.4rem,1.5vw,1.2rem); margin-bottom:1.6rem; }
+.pod{ flex:1 1 0; max-width:220px; display:flex; flex-direction:column; align-items:center; }
+.pod .who{ font-weight:900; font-size:clamp(.8rem,1.8vw,1.1rem); margin-top:.4rem; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pod .sc{ font-size:.72rem; color:var(--muted); font-weight:800; }
+.pod .stand{ width:100%; border-radius:10px 10px 0 0; margin-top:.6rem; display:grid; place-items:center;
+  font-family:var(--display); font-size:clamp(1.4rem,4vw,2.4rem); color:var(--ink); }
+.pod.p1 .stand{ height:110px; background:var(--yellow); }
+.pod.p2 .stand{ height:80px;  background:#D9D2C4; }
+.pod.p3 .stand{ height:58px;  background:var(--orange); }
+.res-list{ list-style:none; margin:0 auto; padding:0; display:grid; gap:.4rem; max-width:640px; text-align:left; }
+.res-list li{ display:flex; align-items:center; gap:.7rem; background:rgba(0,0,0,.3); border-radius:10px; padding:.4rem .8rem; font-weight:800; }
+.res-list li.me{ background:rgba(255,224,27,.16); }
+.res-list .rank{ font-family:var(--display); color:var(--yellow); width:1.8em; }
+.res-list .who{ flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.res-list .sc{ color:var(--muted); font-variant-numeric:tabular-nums; }
+
 .roster-avatar{ display:inline-flex; line-height:0; }
 
 /* --- host log (per-player word registry) --- */
@@ -418,27 +478,20 @@ footer b{ color:var(--paper); }
       <p id="netHelp" class="waiting"></p>
       <p id="lobbyRules" class="waiting"></p>
 
-      <div style="margin:1.2rem 0 .4rem">
-        <label for="myName" style="font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;font-weight:900;color:var(--muted)">Your name</label><br>
-        <input class="nameinput" id="myName" maxlength="14" autocomplete="off" style="margin-top:.4rem">
-      </div>
-
-      <div class="avatarpicker" id="avatarPicker">
-        <div class="avatar-row">
+      <div class="builder" id="builder">
+        <div class="builder-top">
           <div class="avatar-preview" id="avatarPreview"></div>
-          <div>
-            <p style="font-weight:900;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Your character</p>
-            <p style="margin-top:.2rem;font-size:.8rem;color:var(--paper);max-width:24ch">Build a little Andean look for the game.</p>
+          <div class="builder-intro">
+            <p class="avatar-label">Your character</p>
+            <p class="builder-sub">More than three million looks. Choose a hat, clothes, a pattern, an extra and an animal friend.</p>
+            <div class="builder-actions">
+              <input class="nameinput" id="myName" maxlength="14" autocomplete="off" placeholder="Your name" aria-label="Your name">
+              <button type="button" class="btn" id="avRandom">Surprise me</button>
+            </div>
           </div>
         </div>
-        <p class="avatar-label">Skin tone</p>
-        <div class="swatchrow" id="skinSeg"></div>
-        <p class="avatar-label">Hat</p>
-        <div class="seg" id="hatSeg" role="group" aria-label="Hat"></div>
-        <p class="avatar-label">Poncho colour</p>
-        <div class="swatchrow" id="ponchoSeg"></div>
-        <p class="avatar-label">Accessory</p>
-        <div class="seg" id="accSeg" role="group" aria-label="Accessory"></div>
+        <div class="tabs" id="avTabs" role="group" aria-label="Character parts"></div>
+        <div class="options" id="avOptions"></div>
       </div>
 
       <ul class="roster" id="roster"></ul>
@@ -459,6 +512,7 @@ footer b{ color:var(--paper); }
       <span class="chip">Room <code id="gameCode">—</code></span>
       <span class="chip" id="gameNet" hidden><span class="dot"></span><span id="gameNetText">Live</span></span>
       <span class="spacer"></span>
+      <button type="button" class="btn" id="bigBtn" hidden>Results screen</button>
       <button type="button" class="btn" id="leaveGame">Leave</button>
     </div>
 
@@ -530,6 +584,39 @@ footer b{ color:var(--paper); }
   </div>
 </div>
 
+<div class="bigscreen" id="bigscreen" hidden role="dialog" aria-modal="true" aria-labelledby="bsTitle">
+ <div class="bs-inner">
+  <div class="bs-head">
+    <div>
+      <span class="eyebrow">Live scoreboard</span>
+      <h2 id="bsTitle">THE RACE</h2>
+    </div>
+    <div class="bs-meta">
+      <span class="chip">Room <code id="bsCode">—</code></span>
+      <span class="chip" id="bsCount"></span>
+    </div>
+  </div>
+  <ol class="bs-list" id="bsList"></ol>
+  <div class="bs-actions">
+    <button type="button" class="btn" id="bsBack">Back to my grid</button>
+    <button type="button" class="btn danger" id="bsEnd">End the round</button>
+  </div>
+ </div>
+</div>
+
+<div class="results" id="results" hidden role="dialog" aria-modal="true" aria-labelledby="resTitle">
+  <div class="res-inner">
+    <span class="eyebrow" id="resEyebrow">Final results</span>
+    <h2 id="resTitle">THE PODIUM</h2>
+    <div class="podium3" id="podium3"></div>
+    <ol class="res-list" id="resList"></ol>
+    <div class="bs-actions">
+      <button type="button" class="btn primary" id="resNew" hidden>Start a new round</button>
+      <button type="button" class="btn" id="resClose">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="countdown" id="countdown" hidden><b id="countNum">3</b></div>
 
 <script>
@@ -586,56 +673,182 @@ const BANK = [
 /* =========================================================
    1b. AVATARS — a little Andean character each player can build
    ========================================================= */
-const SKINS = ['#F4C89B','#D9A066','#B97A45','#8A5A32','#5A3A20'];
-const HATS = ['none','chullo','sombrero','flower'];
-const HAT_LABELS = {none:'No hat', chullo:'Chullo', sombrero:'Sombrero', flower:'Flower'};
-const ACCESSORIES = ['none','llama','panflute','inti','chakana'];
-const ACC_LABELS = {none:'None', llama:'Llama', panflute:'Panflute', inti:'Inti sun', chakana:'Chakana'};
-// poncho colours reuse the COLORS palette defined below, once it exists
-
+const SKIN = ['#F5D3A8','#E3AE7D','#C88B5C','#A5673F','#7A4B24','#553318'];
+const PAL  = ['#FF2D78','#FFE01B','#2BE58B','#35D6F0','#FF7A18','#C77DFF','#E01A38','#1B6EF3'];
+const HAIRC='#3B2138', DARK='#241031', CREAM='#FFF3DE', GOLD='#FFC93C', LINE='#3A1C2E', BG='#F7EFE0';
+let uid=0;
+const AV_LABELS = {
+  skin:'Skin', hair:'Hair', hat:'Hat', outfit:'Clothes', patt:'Pattern', col:'Colour', extra:'Extra', pet:'Friend'
+};
+const AV_OPTIONS = {
+  skin:['Light','Warm','Tan','Bronze','Brown','Deep'],
+  hair:['Braids','Long','Short','Curly','Bun','Ponytail'],
+  hat:['No hat','Chullo','Montera','Straw hat','Chucu','Bowler','Feathers','Cap'],
+  outfit:['Poncho','Lliclla','Alpaca sweater','Aguayo','Peru shirt','T-shirt'],
+  patt:['Stripes','Zigzag','Diamonds','Greca','Plain'],
+  col:['Pink','Yellow','Green','Cyan','Orange','Violet','Red','Blue'],
+  extra:['Nothing','Inti pendant','Earrings','Glasses','Chalina','Flower','Face paint'],
+  pet:['On my own','Llama','Alpaca','Cuy','Condor','Peruvian dog','Macaw']
+};
 function randomAvatar(){
-  const pick = a => a[Math.floor(Math.random()*a.length)];
-  return { skin:pick(SKINS), hat:pick(HATS), poncho:pick(COLORS), accessory:pick(ACCESSORIES) };
+  const r = n => Math.floor(Math.random()*n);
+  return {skin:r(6),hair:r(6),hat:r(8),outfit:r(6),patt:r(5),col:r(8),extra:r(7),pet:r(7)};
 }
+
+function parseAv(a){
+  a = a || {};
+  const c=(v,n)=>Math.min(n-1,Math.max(0,parseInt(v,10)||0));
+  return {skin:c(a.skin,6),hair:c(a.hair,6),hat:c(a.hat,8),outfit:c(a.outfit,6),
+          patt:c(a.patt,5),col:c(a.col,8),extra:c(a.extra,7),pet:c(a.pet,7)};
+}
+
+/* Geometry: head centred at (50,36) r≈17.5, shoulders from y≈60, friend at bottom right. */
+function avatarSVG(av, px){
+  const a=parseAv(av), id='v'+(++uid), P=px||64;
+  const skin=SKIN[a.skin], col=PAL[a.col], col2=PAL[(a.col+3)%8];
+
+  /* ---------- clothes ---------- */
+  const SHAPES=[
+    'M8 112 L24 64 Q50 53 76 64 L92 112 Z',      // poncho
+    'M10 112 L25 66 Q50 55 75 66 L90 112 Z',     // lliclla
+    'M16 112 L23 70 Q50 58 77 70 L84 112 Z',     // sweater
+    'M8 112 L24 64 Q50 53 76 64 L92 112 Z',      // aguayo
+    'M15 112 L23 69 Q50 57 77 69 L85 112 Z',     // jersey
+    'M17 112 L24 71 Q50 60 76 71 L83 112 Z'      // t-shirt
+  ];
+  const body=SHAPES[a.outfit];
+  let bodyFill=col, pattern='', overlay='';
+
+  if(a.outfit===4){                                   // Peru jersey: white with the red sash
+    bodyFill='#FBF6EA';
+    overlay=`<path d="M18 112 L76 60 L90 70 L34 112 Z" fill="#E01A38"/>`;
+  } else {
+    pattern=[
+      `<rect x="0" y="72" width="100" height="6" fill="${CREAM}"/><rect x="0" y="85" width="100" height="6" fill="${DARK}"/><rect x="0" y="98" width="100" height="6" fill="${CREAM}"/>`,
+      `<path d="M2 88 l10 -10 l10 10 l10 -10 l10 10 l10 -10 l10 10 l10 -10 l10 10 l10 -10 l10 10" fill="none" stroke="${CREAM}" stroke-width="6"/><rect x="0" y="100" width="100" height="5" fill="${DARK}"/>`,
+      `<g fill="${CREAM}"><rect x="27" y="79" width="13" height="13" transform="rotate(45 33.5 85.5)"/><rect x="43" y="79" width="13" height="13" transform="rotate(45 49.5 85.5)"/><rect x="59" y="79" width="13" height="13" transform="rotate(45 65.5 85.5)"/></g><rect x="0" y="99" width="100" height="6" fill="${DARK}"/>`,
+      `<g fill="none" stroke="${CREAM}" stroke-width="4"><path d="M22 102 v-10 h9 v-9 h9"/><path d="M48 102 v-10 h9 v-9 h9"/><path d="M74 102 v-10 h9"/></g><rect x="0" y="68" width="100" height="5" fill="${DARK}"/>`,
+      `<rect x="0" y="96" width="100" height="5" fill="${CREAM}"/>`
+    ][a.patt];
+  }
+  if(a.outfit===1) overlay+=`<path d="M20 70 Q50 54 80 70 Q68 86 50 84 Q32 86 20 70 Z" fill="${col2}"/><path d="M20 70 Q50 54 80 70" fill="none" stroke="${CREAM}" stroke-width="3"/><g fill="${CREAM}"><circle cx="34" cy="74" r="2"/><circle cx="50" cy="77" r="2"/><circle cx="66" cy="74" r="2"/></g>`;
+  if(a.outfit===2) overlay+=`<path d="M37 58 h26 v9 h-26 Z" fill="${col2}"/>`;
+  if(a.outfit===3) overlay+=`<g><path d="M66 60 q26 6 24 28 q-3 16 -21 13 q-12 -3 -9 -19 Z" fill="${col2}"/><g stroke="${DARK}" stroke-width="4"><path d="M69 70 h18"/><path d="M67 82 h22"/></g><path d="M63 60 q-16 7 -11 18" fill="none" stroke="${DARK}" stroke-width="4"/></g>`;
+  if(a.outfit===5) overlay+=`<path d="M41 60 q9 10 18 0" fill="none" stroke="${DARK}" stroke-width="3"/>`;
+
+  /* ---------- hair ---------- */
+  const fringe=`<path d="M31 35 Q33 14 50 14 Q67 14 69 35 Q59 24 50 25 Q41 24 31 35 Z" fill="${HAIRC}"/>`;
+  let hairBack='', hairFront='';
+  if(a.hair===0){ hairBack=`<ellipse cx="50" cy="36" rx="19.5" ry="19.5" fill="${HAIRC}"/>`;
+    hairFront=fringe+`<rect x="24" y="40" width="9" height="30" rx="4.5" fill="${HAIRC}"/><circle cx="28.5" cy="72" r="5" fill="${col}"/>`
+      +`<rect x="67" y="40" width="9" height="30" rx="4.5" fill="${HAIRC}"/><circle cx="71.5" cy="72" r="5" fill="${col}"/>`; }
+  if(a.hair===1){ hairBack=`<path d="M27 38 Q27 12 50 12 Q73 12 73 38 L73 78 Q64 68 63 46 L37 46 Q36 68 27 78 Z" fill="${HAIRC}"/>`; hairFront=fringe; }
+  if(a.hair===2){ hairFront=`<path d="M31 37 Q31 12 50 12 Q69 12 69 37 Q66 25 50 26 Q36 26 31 37 Z" fill="${HAIRC}"/>`; }
+  if(a.hair===3){ hairBack=`<g fill="${HAIRC}"><circle cx="33" cy="27" r="10"/><circle cx="42" cy="17" r="11"/><circle cx="58" cy="17" r="11"/><circle cx="67" cy="27" r="10"/><circle cx="50" cy="23" r="12"/></g>`; }
+  if(a.hair===4){ hairBack=`<circle cx="50" cy="9" r="10" fill="${HAIRC}"/><ellipse cx="50" cy="36" rx="20" ry="20" fill="${HAIRC}"/>`; hairFront=fringe; }
+  if(a.hair===5){ hairBack=`<ellipse cx="50" cy="36" rx="20" ry="20" fill="${HAIRC}"/><path d="M68 24 q18 8 14 30 q-4 14 -14 11 q11 -20 -5 -33 Z" fill="${HAIRC}"/>`; hairFront=fringe; }
+
+  /* ---------- hats ---------- */
+  const HATS=['',
+   `<path d="M29 36 Q29 5 50 5 Q71 5 71 36 Z" fill="${col}"/>
+    <g fill="${CREAM}"><rect x="35" y="15" width="5" height="5"/><rect x="47" y="10" width="6" height="5"/><rect x="60" y="15" width="5" height="5"/></g>
+    <rect x="26" y="29" width="48" height="8" rx="4" fill="${DARK}"/>
+    <path d="M30 37 q-6 12 0 19" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M70 37 q6 12 0 19" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <circle cx="29" cy="59" r="5" fill="${CREAM}"/><circle cx="71" cy="59" r="5" fill="${CREAM}"/>
+    <circle cx="50" cy="3" r="6" fill="${CREAM}"/>`,
+   `<ellipse cx="50" cy="21" rx="33" ry="10" fill="${col}"/><ellipse cx="50" cy="18" rx="20" ry="6" fill="${DARK}"/>
+    <g stroke="${CREAM}" stroke-width="2.4"><path d="M19 23 v10"/><path d="M81 23 v10"/></g>
+    <circle cx="19" cy="35" r="4" fill="${CREAM}"/><circle cx="81" cy="35" r="4" fill="${CREAM}"/>`,
+   `<ellipse cx="50" cy="26" rx="36" ry="8.5" fill="#E9C88F"/><path d="M33 26 Q33 3 50 3 Q67 3 67 26 Z" fill="#E9C88F"/>
+    <rect x="32" y="19" width="36" height="7" fill="${col}"/>`,
+   `<ellipse cx="50" cy="24" rx="28" ry="7.5" fill="${DARK}"/><path d="M33 24 L35 0 Q50 -4 65 0 L67 24 Z" fill="${col}"/>
+    <rect x="33" y="9" width="34" height="6" fill="${CREAM}"/>`,
+   `<ellipse cx="50" cy="25" rx="30" ry="7.5" fill="${DARK}"/><path d="M32 25 Q32 3 50 3 Q68 3 68 25 Z" fill="${DARK}"/>
+    <rect x="32" y="17" width="36" height="7" fill="${col}"/>`,
+   `<g fill="${col}"><path d="M50 -4 l6 24 h-12 Z"/><path d="M32 1 l11 21 l-10 4 Z"/><path d="M68 1 l-11 21 l10 4 Z"/></g>
+    <g fill="${col2}"><path d="M41 -2 l5 23 h-10 Z"/><path d="M59 -2 l-5 23 h10 Z"/></g>
+    <rect x="27" y="19" width="46" height="9" rx="4.5" fill="${DARK}"/>
+    <g fill="${CREAM}"><rect x="34" y="21" width="5" height="5"/><rect x="47" y="21" width="5" height="5"/><rect x="60" y="21" width="5" height="5"/></g>`,
+   `<path d="M31 26 Q31 4 50 4 Q69 4 69 26 Z" fill="${col}"/><path d="M31 26 q-15 1 -17 7 q24 4 62 0 q0 -6 -13 -7 Z" fill="${col2}"/>
+    <circle cx="50" cy="5" r="3.4" fill="${col2}"/>`
+  ];
+
+  /* ---------- extras ---------- */
+  const EXTRA=['',
+   `<g><path d="M50 58 l-9 8 M50 58 l9 8" stroke="${GOLD}" stroke-width="2.4"/><circle cx="50" cy="72" r="9" fill="${GOLD}"/>
+     <g stroke="${DARK}" stroke-width="1.6"><path d="M50 66 v-3"/><path d="M43 69 l-2 -2"/><path d="M57 69 l2 -2"/><path d="M50 78 v3"/></g><circle cx="50" cy="72" r="4" fill="${DARK}"/></g>`,
+   `<circle cx="32" cy="46" r="4.6" fill="${GOLD}"/><circle cx="68" cy="46" r="4.6" fill="${GOLD}"/>`,
+   `<g fill="none" stroke="${LINE}" stroke-width="2.6"><circle cx="43" cy="36" r="8"/><circle cx="57" cy="36" r="8"/><path d="M50.5 36 h-1"/><path d="M35 35 l-4 1"/><path d="M65 35 l4 1"/></g>`,
+   `<path d="M30 56 q20 12 40 0 q3 9 -4 13 q-16 7 -32 0 q-7 -4 -4 -13 Z" fill="${col2}"/><path d="M64 66 q7 11 3 21" stroke="${col2}" stroke-width="7" fill="none" stroke-linecap="round"/>`,
+   `<g transform="translate(70,18)"><g fill="${col2}"><circle r="4.6"/><circle cx="6.4" r="4.6"/><circle cx="-6.4" r="4.6"/><circle cy="6.4" r="4.6"/><circle cy="-6.4" r="4.6"/></g><circle r="3" fill="${GOLD}"/></g>`,
+   `<g fill="${col}"><rect x="30" y="40" width="11" height="3.4" rx="1.7"/><rect x="30" y="46" width="11" height="3.4" rx="1.7"/><rect x="59" y="40" width="11" height="3.4" rx="1.7"/><rect x="59" y="46" width="11" height="3.4" rx="1.7"/></g>`
+  ];
+
+  /* ---------- animal friends ---------- */
+  const PETS=['',
+   `<g transform="translate(76,71) scale(1.25)"><rect x="-4" y="-6" width="8" height="18" rx="4" fill="#FBF6EA"/><ellipse cx="0" cy="-9" rx="7.5" ry="6.5" fill="#FBF6EA"/>
+     <path d="M-5 -14 l-1.5 -8 l5 4 Z M5 -14 l1.5 -8 l-5 4 Z" fill="#FBF6EA"/>
+     <circle cx="-2.7" cy="-9" r="1.4" fill="${DARK}"/><circle cx="2.7" cy="-9" r="1.4" fill="${DARK}"/>
+     <ellipse cx="0" cy="-5.5" rx="2.6" ry="1.7" fill="#C9A87C"/><rect x="-6.5" y="2" width="13" height="4.5" rx="2.2" fill="${col}"/></g>`,
+   `<g transform="translate(75,71) scale(1.25)"><circle cx="0" cy="-2" r="13" fill="#F3E7D3"/><ellipse cx="0" cy="-9" rx="8" ry="7" fill="#F3E7D3"/>
+     <path d="M-5 -15 l-1.5 -7 l5 3 Z M5 -15 l1.5 -7 l-5 3 Z" fill="#F3E7D3"/>
+     <circle cx="-2.8" cy="-9" r="1.4" fill="${DARK}"/><circle cx="2.8" cy="-9" r="1.4" fill="${DARK}"/>
+     <ellipse cx="0" cy="-5" rx="3" ry="2" fill="#C9A87C"/><rect x="-7.5" y="4" width="15" height="4.5" rx="2.2" fill="${col}"/></g>`,
+   `<g transform="translate(74,76) scale(1.3)"><ellipse rx="14" ry="9.5" fill="#E9DCC6"/><ellipse cx="-9" cy="-4.5" rx="5.4" ry="4.4" fill="${col}"/>
+     <ellipse cx="7" cy="-6" rx="4.6" ry="5.6" fill="#C9A87C"/>
+     <circle cx="-10" cy="-1" r="1.6" fill="${DARK}"/><circle cx="-3" cy="-1" r="1.6" fill="${DARK}"/>
+     <ellipse cx="-6.5" cy="2.6" rx="2.4" ry="1.6" fill="#FF9BB8"/></g>`,
+   `<g transform="translate(74,73) scale(1.25)"><path d="M-14 5 q6 -16 14 -16 q8 0 14 16 q-14 7 -28 0 Z" fill="#2E2333"/>
+     <circle cx="0" cy="-12" r="7.5" fill="#2E2333"/><path d="M-8 -6 q8 5 16 0 q-2 6 -8 6 q-6 0 -8 -6 Z" fill="#FBF6EA"/>
+     <circle cx="-2.6" cy="-13" r="1.5" fill="#FBF6EA"/><circle cx="2.6" cy="-13" r="1.5" fill="#FBF6EA"/>
+     <path d="M0 -10 l5 3.5 l-5 3.5 Z" fill="${GOLD}"/></g>`,
+   `<g transform="translate(75,73) scale(1.25)"><ellipse cx="0" cy="3" rx="11" ry="8" fill="#8E7B93"/><ellipse cx="-1" cy="-7" rx="7.5" ry="6.5" fill="#8E7B93"/>
+     <path d="M-7 -13 l-1 -9 l6 6 Z M5 -13 l2 -9 l-6 6 Z" fill="#8E7B93"/>
+     <circle cx="-3.8" cy="-7" r="1.5" fill="${DARK}"/><circle cx="2.6" cy="-7" r="1.5" fill="${DARK}"/>
+     <ellipse cx="-0.6" cy="-3" rx="2.6" ry="1.8" fill="${DARK}"/>
+     <path d="M-4 -15 q4 -6 8 -1" stroke="${GOLD}" stroke-width="2.2" fill="none"/></g>`,
+   `<g transform="translate(75,71) scale(1.2)"><path d="M3 -1 q17 7 13 22 q-9 4 -15 -7 Z" fill="${col2}"/>
+     <ellipse cx="0" cy="-2" rx="9.5" ry="11.5" fill="#E01A38"/><circle cx="0" cy="-11" r="7.5" fill="#FFE01B"/>
+     <path d="M-7.5 -11 q-5.5 2 -2 6.5 q4.5 2 6.5 -2 Z" fill="#FBF6EA"/>
+     <circle cx="1.5" cy="-13" r="1.6" fill="${DARK}"/></g>`
+  ];
+
+  return `<svg width="${P}" height="${P}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+   <defs><clipPath id="${id}c"><circle cx="50" cy="50" r="47"/></clipPath><clipPath id="${id}b"><path d="${body}"/></clipPath></defs>
+   <circle cx="50" cy="50" r="47" fill="${BG}"/>
+   <g clip-path="url(#${id}c)">
+     ${hairBack}
+     <path d="M43 48 h14 v12 l-7 7 l-7 -7 Z" fill="${skin}"/>
+     <path d="${body}" fill="${bodyFill}"/>
+     <g clip-path="url(#${id}b)">${pattern}${overlay}</g>
+     <path d="${body}" fill="none" stroke="rgba(36,16,49,.22)" stroke-width="1.6"/>
+     <ellipse cx="32.5" cy="39" rx="4.2" ry="5.2" fill="${skin}"/><ellipse cx="67.5" cy="39" rx="4.2" ry="5.2" fill="${skin}"/>
+     <ellipse cx="50" cy="36" rx="17.5" ry="18.5" fill="${skin}"/>
+     ${hairFront}
+     <g fill="${LINE}"><circle cx="43.5" cy="36" r="2.7"/><circle cx="56.5" cy="36" r="2.7"/></g>
+     <g fill="#FF2D78" opacity=".26"><circle cx="36" cy="43" r="4.2"/><circle cx="64" cy="43" r="4.2"/></g>
+     <path d="M44 44 Q50 50 56 44" stroke="${LINE}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+     ${EXTRA[a.extra]}
+     ${HATS[a.hat]}
+     ${PETS[a.pet]}
+   </g>
+   <circle cx="50" cy="50" r="47" fill="none" stroke="${col}" stroke-width="4"/>
+  </svg>`;
+}
+
 function loadSavedAvatar(){
-  try{ const raw = localStorage.getItem('pwh_avatar'); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+  try{
+    const raw = localStorage.getItem('pwh_avatar');
+    if(!raw) return null;
+    const a = JSON.parse(raw);
+    const ok = a && ['skin','hair','hat','outfit','patt','col','extra','pet'].every(k => Number.isInteger(a[k]));
+    return ok ? a : null;
+  }catch(e){ return null; }
 }
 function saveAvatar(av){ try{ localStorage.setItem('pwh_avatar', JSON.stringify(av)); }catch(e){} }
 function loadSavedName(){ try{ return localStorage.getItem('pwh_name') || ''; }catch(e){ return ''; } }
 function saveName(n){ try{ localStorage.setItem('pwh_name', n); }catch(e){} }
-
-function avatarSVG(av, px){
-  av = av || randomAvatar(); px = px || 40;
-  const skin = av.skin || SKINS[0], poncho = av.poncho || COLORS[0];
-  const hat = av.hat || 'none', acc = av.accessory || 'none';
-  let s = '';
-  s += '<path d="M6 54 Q32 40 58 54 L58 64 L6 64 Z" fill="'+poncho+'"/>';
-  s += '<path d="M6 54 Q32 40 58 54" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2"/>';
-  s += '<rect x="26" y="40" width="12" height="10" fill="'+skin+'"/>';
-  s += '<circle cx="14" cy="27" r="3.4" fill="'+skin+'"/><circle cx="50" cy="27" r="3.4" fill="'+skin+'"/>';
-  s += '<circle cx="32" cy="26" r="18" fill="'+skin+'"/>';
-  s += '<circle cx="25" cy="25" r="2.3" fill="#150A1E"/><circle cx="39" cy="25" r="2.3" fill="#150A1E"/>';
-  s += '<path d="M24 33 Q32 39 40 33" stroke="#150A1E" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
-  if(hat === 'chullo'){
-    s += '<path d="M11 23 Q11 1 32 1 Q53 1 53 23 L53 29 Q42 20 32 27 Q22 20 11 29 Z" fill="'+COLORS[1]+'"/>';
-    s += '<path d="M11 13.5 L53 13.5" stroke="'+COLORS[3]+'" stroke-width="3"/>';
-    s += '<path d="M11 19 L53 19" stroke="'+COLORS[0]+'" stroke-width="3"/>';
-    s += '<rect x="6" y="21" width="8" height="16" rx="4" fill="'+COLORS[1]+'"/><rect x="50" y="21" width="8" height="16" rx="4" fill="'+COLORS[1]+'"/>';
-    s += '<circle cx="10" cy="38" r="4" fill="'+COLORS[2]+'"/><circle cx="54" cy="38" r="4" fill="'+COLORS[2]+'"/>';
-  } else if(hat === 'sombrero'){
-    s += '<path d="M16 15 Q32 -6 48 15 Z" fill="'+COLORS[4]+'"/>';
-    s += '<ellipse cx="32" cy="15" rx="27" ry="5.5" fill="'+COLORS[4]+'"/>';
-    s += '<ellipse cx="32" cy="15" rx="9" ry="2.4" fill="'+COLORS[2]+'"/>';
-  } else if(hat === 'flower'){
-    s += '<g transform="translate(45,13)"><circle r="3" fill="'+COLORS[0]+'"/><circle cx="4.2" r="3" fill="'+COLORS[0]+'"/><circle cx="-4.2" r="3" fill="'+COLORS[0]+'"/><circle cy="4.2" r="3" fill="'+COLORS[0]+'"/><circle cy="-4.2" r="3" fill="'+COLORS[0]+'"/><circle r="2.1" fill="'+COLORS[2]+'"/></g>';
-  }
-  if(acc !== 'none'){
-    const badge = {llama:'\uD83E\uDD99', panflute:'\uD83C\uDFBC', inti:'\u2600\uFE0F', chakana:'\u271A'}[acc] || '';
-    s += '<circle cx="51" cy="51" r="9.5" fill="var(--ink)" stroke="var(--paper)" stroke-width="2"/>';
-    s += '<text x="51" y="55" font-size="10" text-anchor="middle">'+badge+'</text>';
-  }
-  return '<svg width="'+px+'" height="'+px+'" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+s+'</svg>';
-}
 
 const SIZES = [12,14,16,18];
 const HINT_STEPS = [0,1,2,3,5,99];
@@ -924,36 +1137,35 @@ function setNet(state, text){
 function defaultName(){
   return mode === 'host' ? 'Host' : 'Player ' + (Math.floor(Math.random()*89) + 10);
 }
+let avTab = 'hat';
 function buildAvatarPicker(){
-  const swatchGroup = (containerId, list, key) => {
-    const el = $(containerId); el.innerHTML = '';
-    list.forEach(val => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'swatch'; b.style.background = val;
-      b.setAttribute('aria-pressed', String(myAvatar[key] === val));
-      b.setAttribute('aria-label', key + ' option');
-      b.addEventListener('click', () => { myAvatar[key] = val; saveAvatar(myAvatar); refreshAvatarUI(); applyAvatarChange(); });
-      el.appendChild(b);
+  const tabs = $('avTabs'); tabs.innerHTML = '';
+  Object.keys(AV_LABELS).forEach(key => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tab'; b.textContent = AV_LABELS[key];
+    b.setAttribute('aria-pressed', String(key === avTab));
+    b.addEventListener('click', () => { avTab = key; buildAvatarPicker(); });
+    tabs.appendChild(b);
+  });
+  const box = $('avOptions'); box.innerHTML = '';
+  AV_OPTIONS[avTab].forEach((label, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'opt';
+    b.setAttribute('aria-pressed', String(myAvatar[avTab] === i));
+    b.setAttribute('aria-label', AV_LABELS[avTab] + ': ' + label);
+    b.innerHTML = avatarSVG({...myAvatar, [avTab]:i}, 54);   // every option previews the change
+    const cap = document.createElement('span'); cap.textContent = label;
+    b.appendChild(cap);
+    b.addEventListener('click', () => {
+      myAvatar[avTab] = i; saveAvatar(myAvatar);
+      refreshAvatarUI(); applyAvatarChange();
     });
-  };
-  const segGroup = (containerId, list, key, labels) => {
-    const el = $(containerId); el.innerHTML = '';
-    list.forEach(val => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.textContent = labels[val] || val;
-      b.setAttribute('aria-pressed', String(myAvatar[key] === val));
-      b.addEventListener('click', () => { myAvatar[key] = val; saveAvatar(myAvatar); refreshAvatarUI(); applyAvatarChange(); });
-      el.appendChild(b);
-    });
-  };
-  swatchGroup('skinSeg', SKINS, 'skin');
-  segGroup('hatSeg', HATS, 'hat', HAT_LABELS);
-  swatchGroup('ponchoSeg', COLORS, 'poncho');
-  segGroup('accSeg', ACCESSORIES, 'accessory', ACC_LABELS);
+    box.appendChild(b);
+  });
 }
 function refreshAvatarUI(){
   buildAvatarPicker();
-  $('avatarPreview').innerHTML = avatarSVG(myAvatar, 64);
+  $('avatarPreview').innerHTML = avatarSVG(myAvatar, 116);
 }
 function applyAvatarChange(){
   if(players.has(myId)) players.get(myId).avatar = myAvatar;
@@ -1001,7 +1213,7 @@ function openLobby(isHost){
   players.set(myId, {name:myName, host:isHost, avatar:myAvatar, found:0, foundWords:[], done:false, time:null});
   $('myName').value = myName;
   buildAvatarPicker();
-  $('avatarPreview').innerHTML = avatarSVG(myAvatar, 64);
+  $('avatarPreview').innerHTML = avatarSVG(myAvatar, 116);
   $('lobbyCode').textContent = roomCode;
   $('lobbyEyebrow').textContent = isHost ? 'Room open' : 'You joined a room';
   const info = unpackCode(roomCode);
@@ -1057,7 +1269,7 @@ function onHostMsg(msg, conn){
 }
 let scoreTimer = null, scoreDue = false;
 function pushScores(){
-  drawRace();
+  drawRace(); drawBigScreen();
   drawRegistry();
   if(scoreTimer){ scoreDue = true; return; }        // a big room stays calm: max ~3 updates a second
   Net.broadcast({t:'scores', list:[...players.entries()].map(([id,p]) => ({id, ...p}))});
@@ -1074,7 +1286,12 @@ function onGuestMsg(msg){
     players.clear();
     msg.list.forEach(p => players.set(p.id, p));
     // the host does not know our peer id under 'me', so keep our own row honest
-    drawRoster(); drawRace();
+    drawRoster(); drawRace(); drawBigScreen();
+  }
+  if(msg.t === 'over'){
+    players.clear();
+    (msg.list || []).forEach(p => players.set(p.id, p));
+    showResults(msg.list || []);
   }
   if(msg.t === 'start'){ if(msg.code) roomCode = msg.code; countdownThenStart(); }
   if(msg.t === 'hostgone'){
@@ -1090,6 +1307,10 @@ $('myName').addEventListener('input', e => {
   drawRoster();
   if(mode === 'guest') Net.send({t:'hello', name:myName, avatar:myAvatar});
   else pushScores();
+});
+$('avRandom').addEventListener('click', () => {
+  myAvatar = randomAvatar(); saveAvatar(myAvatar);
+  refreshAvatarUI(); applyAvatarChange();
 });
 $('lobbyBack').addEventListener('click', () => { Net.close(); mode = 'solo'; show('home'); });
 $('lobbyStart').addEventListener('click', () => {
@@ -1149,6 +1370,8 @@ function startGame(fromRoom){
   show('game');
   $('win').hidden = true;
   $('raceBox').hidden = (mode === 'solo' || !Net.ready);
+  $('bigBtn').hidden = (mode !== 'host');
+  $('results').hidden = true; $('bigscreen').hidden = true;
   drawRace();
   drawRegistry();
   t0 = Date.now();
@@ -1473,6 +1696,107 @@ $('againBtn').addEventListener('click', () => {
   }
 });
 document.addEventListener('keydown', ev => { if(ev.key === 'Escape' && !$('win').hidden) $('win').hidden = true; });
+
+/* =========================================================
+   8b. RESULTS SCREEN — what the host projects on the big screen
+   ========================================================= */
+function standings(){
+  const total = P ? P.words.length : S.words;
+  return [...players.entries()].map(([id,p]) => ({id, ...p}))
+    .sort((a,b) => (b.found - a.found) || ((a.time ?? 1e9) - (b.time ?? 1e9)))
+    .map((p,i) => ({...p, pos:i+1, total}));
+}
+function bigRow(p){
+  const li = document.createElement('li');
+  if(p.id === myId) li.className = 'me';
+  const colour = COLORS[(p.pos-1) % COLORS.length];
+  li.innerHTML = '<span class="rank">' + p.pos + '</span>' +
+    '<span class="av"></span><span class="who"></span>' +
+    '<span class="track"><i style="width:' + Math.round((p.found/p.total)*100) + '%;background:' + colour + '"></i></span>' +
+    '<span class="num">' + (p.done && p.time != null ? fmt(p.time) : p.found + '/' + p.total) +
+    '<small>' + (p.done ? 'finished' : 'words') + '</small></span>';
+  li.querySelector('.av').innerHTML = avatarSVG(p.avatar, 58);
+  li.querySelector('.who').textContent = p.name;
+  return li;
+}
+function drawBigScreen(){
+  if($('bigscreen').hidden) return;
+  const list = standings();
+  const ol = $('bsList');
+  ol.className = 'bs-list' + (list.length > 6 ? ' two' : '');
+  ol.innerHTML = '';
+  if(!list.length){ ol.innerHTML = '<p class="bs-empty">Nobody has joined yet.</p>'; }
+  else list.forEach(p => ol.appendChild(bigRow(p)));
+  $('bsCode').textContent = roomCode;
+  $('bsCount').textContent = list.length + (list.length === 1 ? ' player' : ' players');
+}
+function openBigScreen(){ $('bigscreen').hidden = false; drawBigScreen(); }
+
+function showResults(list){
+  finished = true;
+  clearInterval(timerId);
+  $('win').hidden = true; $('bigscreen').hidden = true;
+  const total = P ? P.words.length : S.words;
+  const ranked = list.map(p => ({...p, total})).sort((a,b) => (b.found - a.found) || ((a.time ?? 1e9) - (b.time ?? 1e9)));
+
+  const pod = $('podium3'); pod.innerHTML = '';
+  const order = [1,0,2];   // silver, gold, bronze — so first place stands in the middle
+  order.forEach(idx => {
+    const p = ranked[idx];
+    if(!p) return;
+    const d = document.createElement('div');
+    d.className = 'pod p' + (idx+1);
+    const av = document.createElement('div'); av.style.lineHeight = '0';
+    av.innerHTML = avatarSVG(p.avatar, idx === 0 ? 96 : 74);
+    const nm = document.createElement('div'); nm.className = 'who'; nm.textContent = p.name;
+    const sc = document.createElement('div'); sc.className = 'sc';
+    sc.textContent = p.found + '/' + total + (p.done && p.time != null ? ' · ' + fmt(p.time) : '');
+    const st = document.createElement('div'); st.className = 'stand'; st.textContent = idx+1;
+    d.append(av, nm, sc, st);
+    pod.appendChild(d);
+  });
+
+  const ol = $('resList'); ol.innerHTML = '';
+  ranked.slice(3).forEach((p, i) => {
+    const li = document.createElement('li');
+    if(p.id === myId) li.className = 'me';
+    li.innerHTML = '<span class="rank">' + (i+4) + '</span><span class="av" style="line-height:0"></span>' +
+                   '<span class="who"></span><span class="sc">' + p.found + '/' + total +
+                   (p.done && p.time != null ? ' · ' + fmt(p.time) : '') + '</span>';
+    li.querySelector('.av').innerHTML = avatarSVG(p.avatar, 28);
+    li.querySelector('.who').textContent = p.name;
+    ol.appendChild(li);
+  });
+
+  $('resEyebrow').textContent = mode === 'guest' ? 'The host ended the round' : 'Final results';
+  $('resNew').hidden = (mode !== 'host');
+  $('results').hidden = false;
+  $('resClose').focus({preventScroll:true});
+}
+function endRound(){
+  const list = standings();
+  if(mode === 'host' && Net.ready) Net.broadcast({t:'over', list});
+  showResults(list);
+}
+$('bigBtn').addEventListener('click', openBigScreen);
+$('bsBack').addEventListener('click', () => { $('bigscreen').hidden = true; });
+$('bsEnd').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if(b.dataset.armed !== '1'){
+    b.dataset.armed = '1'; b.textContent = 'Tap again to end it';
+    setTimeout(() => { b.dataset.armed = ''; b.textContent = 'End the round'; }, 4000);
+    return;
+  }
+  b.dataset.armed = ''; b.textContent = 'End the round';
+  endRound();
+});
+$('resClose').addEventListener('click', () => { $('results').hidden = true; });
+$('resNew').addEventListener('click', () => {
+  roomCode = packCode(S, newSeed());
+  if(Net.ready) Net.broadcast({t:'start', code:roomCode});
+  $('results').hidden = true;
+  countdownThenStart();
+});
 
 /* =========================================================
    9. BOOT
