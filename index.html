@@ -474,6 +474,7 @@ footer b{ color:var(--paper); }
       <div class="share">
         <button type="button" class="btn" id="copyLink">Copy the link</button>
         <span class="chip" id="netChip"><span class="dot"></span><span id="netText">Connecting…</span></span>
+        <button type="button" class="linkbtn" id="retryNet" hidden>Try again</button>
       </div>
       <p id="netHelp" class="waiting"></p>
       <p id="lobbyRules" class="waiting"></p>
@@ -678,9 +679,10 @@ const PAL  = ['#FF2D78','#FFE01B','#2BE58B','#35D6F0','#FF7A18','#C77DFF','#E01A
 const HAIRC='#3B2138', DARK='#241031', CREAM='#FFF3DE', GOLD='#FFC93C', LINE='#3A1C2E', BG='#F7EFE0';
 let uid=0;
 const AV_LABELS = {
-  skin:'Skin', hair:'Hair', hat:'Hat', outfit:'Clothes', patt:'Pattern', col:'Colour', extra:'Extra', pet:'Friend'
+  body:'Person', skin:'Skin', hair:'Hair', hat:'Hat', outfit:'Clothes', patt:'Pattern', col:'Colour', extra:'Extra', pet:'Friend'
 };
 const AV_OPTIONS = {
+  body:['Woman','Man','Moustache','Beard'],
   skin:['Light','Warm','Tan','Bronze','Brown','Deep'],
   hair:['Braids','Long','Short','Curly','Bun','Ponytail'],
   hat:['No hat','Chullo','Montera','Straw hat','Chucu','Bowler','Feathers','Cap'],
@@ -692,13 +694,13 @@ const AV_OPTIONS = {
 };
 function randomAvatar(){
   const r = n => Math.floor(Math.random()*n);
-  return {skin:r(6),hair:r(6),hat:r(8),outfit:r(6),patt:r(5),col:r(8),extra:r(7),pet:r(7)};
+  return {body:r(4),skin:r(6),hair:r(6),hat:r(8),outfit:r(6),patt:r(5),col:r(8),extra:r(7),pet:r(7)};
 }
 
 function parseAv(a){
   a = a || {};
   const c=(v,n)=>Math.min(n-1,Math.max(0,parseInt(v,10)||0));
-  return {skin:c(a.skin,6),hair:c(a.hair,6),hat:c(a.hat,8),outfit:c(a.outfit,6),
+  return {body:c(a.body,4),skin:c(a.skin,6),hair:c(a.hair,6),hat:c(a.hat,8),outfit:c(a.outfit,6),
           patt:c(a.patt,5),col:c(a.col,8),extra:c(a.extra,7),pet:c(a.pet,7)};
 }
 
@@ -706,6 +708,20 @@ function parseAv(a){
 function avatarSVG(av, px){
   const a=parseAv(av), id='v'+(++uid), P=px||64;
   const skin=SKIN[a.skin], col=PAL[a.col], col2=PAL[(a.col+3)%8];
+  const male = a.body >= 1;
+  const shoulders = male ? 'translate(50,0) scale(1.1,1) translate(-50,0)' : 'translate(50,0) scale(.97,1) translate(-50,0)';
+  const headShape = male
+    ? '<path d="M31 36 v-4 a19 19.5 0 0 1 38 0 v4 q0 18.5 -19 18.5 q-19 0 -19 -18.5 Z" fill="'+skin+'"/>'
+    : '<ellipse cx="50" cy="36" rx="17.5" ry="18.5" fill="'+skin+'"/>';
+  const brows = male
+    ? '<g fill="'+HAIRC+'"><rect x="37.5" y="30.4" width="12" height="3.6" rx="1.8" transform="rotate(-5 43.5 32)"/>'
+      + '<rect x="50.5" y="30.4" width="12" height="3.6" rx="1.8" transform="rotate(5 56.5 32)"/></g>'
+    : '<g stroke="'+LINE+'" stroke-width="1.6" stroke-linecap="round" fill="none">'
+      + '<path d="M38.5 32.5 l-2.5 -2"/><path d="M41 31 l-1.5 -2.6"/><path d="M61.5 32.5 l2.5 -2"/><path d="M59 31 l1.5 -2.6"/></g>';
+  const beard = a.body === 3
+    ? '<path d="M31.5 34 q1 24 18.5 24 q17.5 0 18.5 -24 q-3 14 -18.5 14 q-15.5 0 -18.5 -14 Z" fill="'+HAIRC+'"/>' : '';
+  const moustache = a.body >= 2
+    ? '<path d="M41 45 q9 -5 18 0 q-4 6 -9 6 q-5 0 -9 -6 Z" fill="'+HAIRC+'"/>' : '';
 
   /* ---------- clothes ---------- */
   const SHAPES=[
@@ -750,13 +766,13 @@ function avatarSVG(av, px){
 
   /* ---------- hats ---------- */
   const HATS=['',
-   `<path d="M29 36 Q29 5 50 5 Q71 5 71 36 Z" fill="${col}"/>
-    <g fill="${CREAM}"><rect x="35" y="15" width="5" height="5"/><rect x="47" y="10" width="6" height="5"/><rect x="60" y="15" width="5" height="5"/></g>
-    <rect x="26" y="29" width="48" height="8" rx="4" fill="${DARK}"/>
-    <path d="M30 37 q-6 12 0 19" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round"/>
-    <path d="M70 37 q6 12 0 19" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round"/>
-    <circle cx="29" cy="59" r="5" fill="${CREAM}"/><circle cx="71" cy="59" r="5" fill="${CREAM}"/>
-    <circle cx="50" cy="3" r="6" fill="${CREAM}"/>`,
+   `<path d="M29 33 Q29 2 50 2 Q71 2 71 33 Z" fill="${col}"/>
+    <g fill="${CREAM}"><rect x="35" y="12" width="5" height="5"/><rect x="47" y="7" width="6" height="5"/><rect x="60" y="12" width="5" height="5"/></g>
+    <rect x="26" y="25.5" width="48" height="8" rx="4" fill="${DARK}"/>
+    <path d="M30 33 q-6 12 0 19" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M70 33 q6 12 0 19" stroke="${col}" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <circle cx="29" cy="55" r="5" fill="${CREAM}"/><circle cx="71" cy="55" r="5" fill="${CREAM}"/>
+    <circle cx="50" cy="0" r="6" fill="${CREAM}"/>`,
    `<ellipse cx="50" cy="21" rx="33" ry="10" fill="${col}"/><ellipse cx="50" cy="18" rx="20" ry="6" fill="${DARK}"/>
     <g stroke="${CREAM}" stroke-width="2.4"><path d="M19 23 v10"/><path d="M81 23 v10"/></g>
     <circle cx="19" cy="35" r="4" fill="${CREAM}"/><circle cx="81" cy="35" r="4" fill="${CREAM}"/>`,
@@ -820,15 +836,20 @@ function avatarSVG(av, px){
    <g clip-path="url(#${id}c)">
      ${hairBack}
      <path d="M43 48 h14 v12 l-7 7 l-7 -7 Z" fill="${skin}"/>
-     <path d="${body}" fill="${bodyFill}"/>
-     <g clip-path="url(#${id}b)">${pattern}${overlay}</g>
-     <path d="${body}" fill="none" stroke="rgba(36,16,49,.22)" stroke-width="1.6"/>
+     <g transform="${shoulders}">
+       <path d="${body}" fill="${bodyFill}"/>
+       <g clip-path="url(#${id}b)">${pattern}${overlay}</g>
+       <path d="${body}" fill="none" stroke="rgba(36,16,49,.22)" stroke-width="1.6"/>
+     </g>
      <ellipse cx="32.5" cy="39" rx="4.2" ry="5.2" fill="${skin}"/><ellipse cx="67.5" cy="39" rx="4.2" ry="5.2" fill="${skin}"/>
-     <ellipse cx="50" cy="36" rx="17.5" ry="18.5" fill="${skin}"/>
+     ${headShape}
      ${hairFront}
+     ${beard}
+     ${brows}
      <g fill="${LINE}"><circle cx="43.5" cy="36" r="2.7"/><circle cx="56.5" cy="36" r="2.7"/></g>
      <g fill="#FF2D78" opacity=".26"><circle cx="36" cy="43" r="4.2"/><circle cx="64" cy="43" r="4.2"/></g>
      <path d="M44 44 Q50 50 56 44" stroke="${LINE}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+     ${moustache}
      ${EXTRA[a.extra]}
      ${HATS[a.hat]}
      ${PETS[a.pet]}
@@ -842,7 +863,7 @@ function loadSavedAvatar(){
     const raw = localStorage.getItem('pwh_avatar');
     if(!raw) return null;
     const a = JSON.parse(raw);
-    const ok = a && ['skin','hair','hat','outfit','patt','col','extra','pet'].every(k => Number.isInteger(a[k]));
+    const ok = a && ['body','skin','hair','hat','outfit','patt','col','extra','pet'].every(k => Number.isInteger(a[k]));
     return ok ? a : null;
   }catch(e){ return null; }
 }
@@ -970,6 +991,18 @@ function buildPuzzle(S, seed){
 /* =========================================================
    4. NETWORK — a peer-to-peer room, no server of our own
    ========================================================= */
+/* Devices on different networks (mobile data vs campus wi-fi) need help finding
+   each other. STUN discovers each device's public address; TURN relays the data
+   when a firewall refuses a direct link. Both are free public services — if they
+   are unreachable the browser simply ignores them and tries a direct connection. */
+const ICE = {
+  iceServers:[
+    {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']},
+    {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],
+     username:'openrelayproject', credential:'openrelayproject'}
+  ]
+};
+
 const Net = {
   ready:false, isHost:false, peer:null, conns:[], conn:null, onEvent:null, roomId:'',
 
@@ -989,8 +1022,8 @@ const Net = {
     this.onEvent = onEvent; this.isHost = true; this.roomId = 'perwh-' + code.toLowerCase();
     await this.load();
     await new Promise((res, rej) => {
-      const done = setTimeout(() => rej(new Error('timeout')), 12000);
-      this.peer = new Peer(this.roomId, {debug:0});
+      const done = setTimeout(() => rej(new Error('timeout')), 20000);
+      this.peer = new Peer(this.roomId, {debug:0, config:ICE});
       this.peer.on('open', () => { clearTimeout(done); res(); });
       this.peer.on('error', e => { clearTimeout(done); rej(e); });
     });
@@ -1010,8 +1043,8 @@ const Net = {
     this.onEvent = onEvent; this.isHost = false; this.roomId = 'perwh-' + code.toLowerCase();
     await this.load();
     await new Promise((res, rej) => {
-      const done = setTimeout(() => rej(new Error('timeout')), 12000);
-      this.peer = new Peer({debug:0});
+      const done = setTimeout(() => rej(new Error('timeout')), 20000);
+      this.peer = new Peer({debug:0, config:ICE});
       this.peer.on('error', e => { clearTimeout(done); rej(e); });
       this.peer.on('open', () => {
         this.conn = this.peer.connect(this.roomId, {reliable:true});
@@ -1137,7 +1170,15 @@ function setNet(state, text){
 function defaultName(){
   return mode === 'host' ? 'Host' : 'Player ' + (Math.floor(Math.random()*89) + 10);
 }
-let avTab = 'hat';
+let avTab = 'body';
+const LONG_HAIR = [0,1,4,5];                       // braids, long, bun, ponytail
+function withBody(av, v){
+  const out = {...av, body:v};
+  const wasMale = (av.body||0) >= 1, isMale = v >= 1;
+  if(isMale && !wasMale && LONG_HAIR.includes(out.hair)) out.hair = 2;   // short
+  if(!isMale && wasMale && !LONG_HAIR.includes(out.hair)) out.hair = 1;  // long
+  return out;
+}
 function buildAvatarPicker(){
   const tabs = $('avTabs'); tabs.innerHTML = '';
   Object.keys(AV_LABELS).forEach(key => {
@@ -1153,11 +1194,13 @@ function buildAvatarPicker(){
     b.type = 'button'; b.className = 'opt';
     b.setAttribute('aria-pressed', String(myAvatar[avTab] === i));
     b.setAttribute('aria-label', AV_LABELS[avTab] + ': ' + label);
-    b.innerHTML = avatarSVG({...myAvatar, [avTab]:i}, 54);   // every option previews the change
+    const preview = avTab === 'body' ? withBody(myAvatar, i) : {...myAvatar, [avTab]:i};
+    b.innerHTML = avatarSVG(preview, 54);   // every option previews the exact result
     const cap = document.createElement('span'); cap.textContent = label;
     b.appendChild(cap);
     b.addEventListener('click', () => {
-      myAvatar[avTab] = i; saveAvatar(myAvatar);
+      myAvatar = avTab === 'body' ? withBody(myAvatar, i) : {...myAvatar, [avTab]:i};
+      saveAvatar(myAvatar);
       refreshAvatarUI(); applyAvatarChange();
     });
     box.appendChild(b);
@@ -1227,17 +1270,28 @@ function openLobby(isHost){
   setNet('', 'Connecting…');
   connect(isHost);
 }
-async function connect(isHost){
+async function connect(isHost, attempt){
+  attempt = attempt || 0;
+  $('retryNet').hidden = true;
   try{
     if(isHost) await Net.host(roomCode, onHostMsg);
     else       await Net.join(roomCode, onGuestMsg);
     setNet('on', 'Live');
     $('netHelp').textContent = isHost
       ? 'Everybody who joins waits in the lobby until you press the button — then it starts for the whole room at once.'
-      : 'You are connected. Set up your name and character, then wait — the host starts the round for everyone.';
+      : 'You are connected. The host starts the round for everyone.';
     if(!isHost) Net.send({t:'hello', name:myName, avatar:myAvatar});
   }catch(err){
+    // someone else already holds this code: take a new one and try once more
+    if(isHost && err && err.type === 'unavailable-id' && attempt < 2){
+      Net.close();
+      roomCode = packCode(S, newSeed());
+      $('lobbyCode').textContent = roomCode;
+      try{ history.replaceState(null, '', '?r=' + roomCode); }catch(e){}
+      return connect(true, attempt + 1);
+    }
     setNet('off', 'Shared code');
+    $('retryNet').hidden = false;
     $('netHelp').textContent = 'No live connection here, but the code carries the whole puzzle: '
       + 'everyone who types it gets this exact grid. Count to three out loud and start together.';
     toast(isHost ? 'The live room could not open — the code still works for everyone.'
@@ -1245,6 +1299,12 @@ async function connect(isHost){
   }
   updateLobbyStartUI();
 }
+$('retryNet').addEventListener('click', () => {
+  Net.close();
+  setNet('', 'Connecting…');
+  $('netHelp').textContent = 'Trying again…';
+  connect(mode === 'host');
+});
 
 /* --- host receives ------------------------------------------------ */
 function onHostMsg(msg, conn){
